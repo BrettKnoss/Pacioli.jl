@@ -4,50 +4,23 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ bc8fa216-410d-4cc5-b273-22f07c9334ad
-using DataFrames
+# ╔═╡ 3d5e6bd6-27a8-11ec-3e7d-15c091c0a256
+using FunSQL
 
-# ╔═╡ 516f8e5e-8c4b-4208-896f-945d0138eadc
-using DecFP
+# ╔═╡ 28acaf3f-3444-42b9-818d-88d383566773
+using DataFrames, DecFP
 
-# ╔═╡ 98085028-358d-48df-865d-b4efc1b0fb6a
-using XLSX
-
-# ╔═╡ 23a0c733-c717-4380-b0ae-bf9e12baf539
-md"""
-Starting Balance consists of a dictionar, containing debit and credit dictionaries, containing accounts as empty dictionaries.
-"""
-
-# ╔═╡ af2597a2-b942-4d45-bb86-98ea9b7f051c
+# ╔═╡ 1e9751a4-ebef-4d77-891b-f5f2662638ed
 starting_balance=starting_balance=Dict(
-	# Starting Balance consists of a dictionary, containing debit and credit dictionaries, containing accounts as empty dictionaries.
-
-	#accounts are organized into credit and debit, then into subledgers based on DEALER acrynym
-	
-	#Debit Accounts
-		#Drawings
-		#Expenses
-		#Assets
-	#Credit Accounts
-		#Liabilities
-		#Equity
-		#Revenue
-	
-		#Year End Accounts   # These are used to close temporary accounts
-			# Gross Revenue
-			# Gross Expenses
-			# Earned Income
 	"debit"=>Dict(
-					# balance = Σdebit - Σcredit		
 		"drawings"=>Dict(),	#debit normal ledgers
 		"expenses"=>Dict(),
 		"assets"=>Dict()),
-	"credit"=>Dict(  # revenue, liabilities, equtiy, and year_end, are credit normal
-					 # balance = Σcredit -  Σdebit
+	"credit"=>Dict(
 		"liabilities"=>Dict(),
 		"equity"=>Dict(),
 		"revenue"=>Dict(),
-			"retained"=> Dict( #Closing Accounts - No Balance Until Temp Accounts Closed
+		"retained"=> Dict( #Closing Accounts - No Balance Until Temp Accounts Closed
 			"Retained Earnings"=>DataFrame(
         date=Vector{String}(),
 		memo=Vector{String}(),
@@ -77,124 +50,10 @@ starting_balance=starting_balance=Dict(
 		memo=Vector{String}(),
         debit=Vector{Dec64}(),
         credit=Vector{Dec64}(),
-		balance=Vector{Dec64}()),
-		)
-	)
-	)
+		balance=Vector{Dec64}())))
+)
 
-# ╔═╡ 3a090d48-4b75-41ab-a22c-82b30bd6b38a
-md"""
-I don't think I need the starting XLSX or starting date
-"""
-
-# ╔═╡ 58be383e-fd15-46bf-b140-fd5b78eb37c1
-md"""
-Load enters each starting balance from an XLSX file, I can create multiple load functions, for different types of files, but I need to see if I end up using a SQL on NoSQL database later on.
-"""
-
-# ╔═╡ 0fc7d5f3-4721-4405-90c3-6474800b0c30
-function loadCSV(startingDate,startingCSV)
-	row =1
-	
-		while row <= length(XLSX.readtable(startingXLSX, "Drawings")[1][1])
-	
-				starting_balance["debit"]["drawings"][(XLSX.readtable(startingXLSX, "Drawings")[1][1][row])]= DataFrame(
-		        			date=Vector{String}([startingDate]),
-							memo=Vector{String}(["Starting Balance"]),
-        					debit=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Drawings")[1][2][row])]),
-        					credit=Vector{Dec64}([Dec64(0.00)]),
-							balance=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Drawings")[1][2][row])]))
-			
-
-			row+=1
-		end
-
-	
-		expense=1
-	
-		while expense <= length(XLSX.readtable(startingXLSX, "Expenses")[1][1])
-	
-				starting_balance["debit"]["expenses"][(XLSX.readtable(startingXLSX, "Expenses")[1][1][expense])]= DataFrame(
-		        			date=Vector{String}([startingDate]),
-							memo=Vector{String}(["Starting Balance"]),
-        					debit=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Expenses")[1][2][expense])]),
-        					credit=Vector{Dec64}([Dec64(0.00)]),
-							balance=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Expenses")[1][2][expense])]))
-			
-
-			expense+=1
-		end
-	
-			asset=1
-	
-		while asset <= length(XLSX.readtable(startingXLSX, "Assets")[1][1])
-			
-
-				starting_balance["debit"]["assets"][(XLSX.readtable(startingXLSX, "Assets")[1][1][asset])]= DataFrame(
-		        			date=Vector{String}([startingDate]),
-							memo=Vector{String}(["Starting Balance"]),
-        					debit=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Assets")[1][2][asset])]),
-        					credit=Vector{Dec64}([Dec64(0.00)]),
-							balance=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Assets")[1][2][asset])]))
-
-
-			asset+=1
-		end
-	
-			liability=1
-	
-		while liability <= length(XLSX.readtable(startingXLSX, "Liabilities")[1][1])
-			
-
-				starting_balance["credit"]["liabilities"][(XLSX.readtable(startingXLSX, "Liabilities")[1][1][liability])]= DataFrame(
-		        			date=Vector{String}([startingDate]),
-							memo=Vector{String}(["Starting Balance"]),
-        					debit=Vector{Dec64}([Dec64(0.00)]),
-							credit=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Liabilities")[1][2][liability])]),
-        			
-							balance=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Liabilities")[1][2][liability])]))
-
-
-			liability+=1
-		end
-	
-			equity=1
-	
-		while equity <= length(XLSX.readtable(startingXLSX, "Equity")[1][1])
-			
-
-				starting_balance["credit"]["equity"][(XLSX.readtable(startingXLSX, "Equity")[1][1][equity])]= DataFrame(
-		        			date=Vector{String}([startingDate]),
-							memo=Vector{String}(["Starting Balance"]),
-        					debit=Vector{Dec64}([Dec64(0.00)]),
-							credit=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Equity")[1][2][equity])]),
-        			
-							balance=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Equity")[1][2][equity])]))
-
-
-			equity+=1
-		end
-	
-			revenue=1
-	
-		while revenue <= length(XLSX.readtable(startingXLSX, "Revenues")[1][1])
-			
-
-				starting_balance["credit"]["revenue"][(XLSX.readtable(startingXLSX, "Revenues")[1][1][revenue])]= DataFrame(
-		        			date=Vector{String}([startingDate]),
-							memo=Vector{String}(["Starting Balance"]),
-        					debit=Vector{Dec64}([Dec64(0.00)]),
-							credit=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Revenues")[1][2][revenue])]),
-        			
-							balance=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Revenues")[1][2][revenue])]))
-
-
-			revenue+=1
-		end
-	
-end
-
-# ╔═╡ f3389620-94dd-4b58-ac3e-5a63ee92a1aa
+# ╔═╡ d1d70ab3-2f12-442a-bfef-a886ccfaaf34
 function loadXLSX(startingDate,startingXLSX)
 	row =1
 	
@@ -296,7 +155,37 @@ function loadXLSX(startingDate,startingXLSX)
 	
 end
 
-# ╔═╡ 66ad3f66-d24c-43c6-bc22-c3fa65bd4a0d
+# ╔═╡ ef2d01d1-82c0-4840-987a-ac4a43e46bdd
+#Transaction, each of these functions computes a transaction
+
+#transaction
+#get_ledger_entry
+#get_account_entry
+#calc_debit_balance!
+#calc_credit_balance!
+#add2ledger!
+
+# ╔═╡ 51eac085-878e-4cc4-a26b-befc09430d43
+function get_ledger_entry(general_ledger, ledger_entry)
+	if haskey(general_ledger["debit"], ledger_entry)
+		return general_ledger["debit"][ledger_entry]
+	elseif haskey(general_ledger["credit"], ledger_entry)
+		return general_ledger["credit"][ledger_entry]
+	else
+		return nothing
+	end
+end
+
+# ╔═╡ b3defa9c-148e-487e-ac56-d8110554033e
+function get_account_entry(ledger_entry, account_entry)
+	if haskey(ledger_entry, account_entry)
+		return ledger_entry[account_entry]
+	else
+		return nothing
+	end
+end
+
+# ╔═╡ cb281fcf-3a91-4fbf-b5f6-a561c928d05d
 function add2ledger!(
     			date,
 				general_ledger,
@@ -349,7 +238,7 @@ function add2ledger!(
     end
 end;
 
-# ╔═╡ 0155ee3d-148d-4c89-b011-7d634c88f4e3
+# ╔═╡ fe229e2d-4030-43af-864b-c127c27ed973
 function calc_debit_balance!(
 				general_ledger,
     			journal_entry,
@@ -430,7 +319,7 @@ function calc_debit_balance!(
 		
 end;	
 
-# ╔═╡ ae593bec-f69a-40bf-82c8-5d5f72512604
+# ╔═╡ 3c0ba899-6da3-4593-aca3-8c855a9abfb1
 function calc_credit_balance!(
 				general_ledger,
 				journal_entry,
@@ -508,27 +397,7 @@ function calc_credit_balance!(
 		
 end;	
 
-# ╔═╡ 0c10ab23-b2ee-4270-bfa4-92020eb9785b
-function get_ledger_entry(general_ledger, ledger_entry)
-	if haskey(general_ledger["debit"], ledger_entry)
-		return general_ledger["debit"][ledger_entry]
-	elseif haskey(general_ledger["credit"], ledger_entry)
-		return general_ledger["credit"][ledger_entry]
-	else
-		return nothing
-	end
-end
-
-# ╔═╡ 5ec20342-9a4c-4b23-b5cd-3601d038443f
-function get_account_entry(ledger_entry, account_entry)
-	if haskey(ledger_entry, account_entry)
-		return ledger_entry[account_entry]
-	else
-		return nothing
-	end
-end
-
-# ╔═╡ e5bed131-c107-4d33-8a83-685499f6edf5
+# ╔═╡ 5bf69e60-f5f3-4106-b4a0-5d2845000e7f
 function transaction(memo, date,
 	debit_ledger_entries=[], debit_account_entries=[],
 	debit_amount_entries=[], credit_ledger_entries=[],
@@ -565,10 +434,12 @@ function transaction(memo, date,
 		if ledger_entry == nothing
         	return "Error -- "*debit_ledger_entries[i]*" not found"
 		end
-		account_entry = get_account_entry(ledger_entry, credit_account_entries[i])
+		account_entry = get_account_entry(ledger_entry, debit_account_entries[i])
+        
 		if account_entry == nothing
-        	return "Error -- "*debit_account_entries[i]*" not found in"*debit_ledger_entries[i]*"."
+            return "Error -- "*debit_account_entries[i]*" not found in "*debit_ledger_entries[i]*"."
         end
+		
 
         debit_amount_entries[i]=round(Dec64(debit_amount_entries[i]),digits=2)
     	i+=1
@@ -576,11 +447,15 @@ function transaction(memo, date,
 
 	i=1
 	while i <= length(credit_amount_entries)
+		
 		ledger_entry = get_ledger_entry(general_ledger, credit_ledger_entries[i])
+		
 		if ledger_entry == nothing
 			return "Error -- "*credit_ledger_entries[i]*" not found"
 		end
+		
 		account_entry = get_account_entry(ledger_entry, credit_account_entries[i])
+		
 		if account_entry == nothing
 			return "Error -- "*credit_account_entries[i]*" not found in "*credit_ledger_entries[i]*"."
         end
@@ -627,28 +502,10 @@ function transaction(memo, date,
     return (journal_entry, memo)
 end;
 
-# ╔═╡ e945d296-25e7-4858-a617-0fbe4295e7d0
-md"""
-I need to test the rounding and descide on the proper format for variable names, but this should let me do a transaction.  
+# ╔═╡ 4c1aaf5b-2f56-4384-b376-6466f66cdbc9
+"""These functions exist to comupte tables based on lists of transactions"""
 
-Issues:
-Ensure all values round correctly
-	This is annoying
-
-Make sure tests work properly
-	A misspelled ledger name should throw an error
-	A misspelled account should throw a unique error
-	Not specifing the ledger should throw a unique error
-	An incorect date should throw a unique error
-Make sure the lists are organized by order of date
-See abouut other ways to organize transactions, such as time, or by use
-
-
-
-Next item, is to create a income statement and balance Sheet.
-"""
-
-# ╔═╡ 3d2f840a-bf68-4a4b-8af4-c387abcf669e
+# ╔═╡ 8967af80-b20f-419f-9503-e334e4ae622c
 function IncomeStatement(ledger)
 	revenue=DataFrame(accounts= Vector{String}(), values=Vector{Dec64}())
 	
@@ -690,12 +547,7 @@ function IncomeStatement(ledger)
 	
 end;
 
-# ╔═╡ acb11c02-7174-493a-a7c7-abfc2f230807
-md"""
-Check to see that the rouunding is correct.
-"""
-
-# ╔═╡ f25ba1a2-6a01-4d4b-abd5-f9d873f90a73
+# ╔═╡ 9277778a-4b68-4c6f-9330-ec0886008f90
 function balancesheet(ledger)
 	balance_sheet=DataFrame(DebitAccount=[],
 							TotalDebit=[],
@@ -858,43 +710,26 @@ function balancesheet(ledger)
 	return balance_sheet
 end;
 
-# ╔═╡ 9b24ce06-c746-49e7-b0a6-67594111ffb7
-md"""
-Check to see that all the rouunding is correct.
-"""
-
-# ╔═╡ 0c2eb823-21d7-4fc7-9981-85d9a30de243
-md"""
-Other things to do
-	Make it able to produce a unique file invoice and recipt when doing a sale.
-	See about using PostgressQL instead of a library
-"""
-
-# ╔═╡ a686bcf3-0b59-4b38-8fa2-d84f2efb8172
-general_ledger=deepcopy(starting_balance)
-
-# ╔═╡ 99c7ee4d-486f-41e4-9928-49e793f5d38a
-transaction("Weird Example",
-	"Jan 2 2021",
-	["retained"],
-	["Gross Income"],
-	[100.00],
-				["asset"],
-				["Land"],
-				[100.00],
-starting_balance)
+# ╔═╡ 45f5fbe7-833c-41a2-b69c-8ae5f968d6b6
+transaction("Weird Example", "Jan 2 2021",
+	["retained"], 
+	["Gross Inome"], 
+	[100.00], 
+					["retained"],
+					["Net Income"], 
+					[100.00], starting_balance)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DecFP = "55939f99-70c6-5e9b-8bb0-5071ed7d61fd"
-XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
+FunSQL = "cf6cc811-59f4-4a10-b258-a8547a8f6407"
 
 [compat]
 DataFrames = "~1.2.2"
 DecFP = "~1.1.0"
-XLSX = "~0.7.8"
+FunSQL = "~0.7.0"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -915,15 +750,15 @@ uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
-git-tree-sha1 = "bd4afa1fdeec0c8b89dad3c6e92bc6e3b0fec9ce"
+git-tree-sha1 = "a325370b9dd0e6bf5656a6f1a7ae80755f8ccc46"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-version = "1.6.0"
+version = "1.7.2"
 
 [[deps.Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "SHA", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "1a90210acd935f222ea19657f143004d2c2a1117"
+git-tree-sha1 = "31d0151f5716b655421d9d75b7fa74cc4e744df2"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "3.38.0"
+version = "3.39.0"
 
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -990,17 +825,17 @@ version = "0.8.5"
 deps = ["ArgTools", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 
-[[deps.EzXML]]
-deps = ["Printf", "XML2_jll"]
-git-tree-sha1 = "0fa3b52a04a4e210aeb1626def9c90df3ae65268"
-uuid = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
-version = "1.1.0"
-
 [[deps.Formatting]]
 deps = ["Printf"]
 git-tree-sha1 = "8339d61043228fdd3eb658d86c926cb282ae72a8"
 uuid = "59287772-0a20-5a39-b81b-1366585eb4c0"
 version = "0.4.2"
+
+[[deps.FunSQL]]
+deps = ["Dates", "PrettyPrinting"]
+git-tree-sha1 = "075f45514e3f0226cbcce4aad910ccaaa668fce8"
+uuid = "cf6cc811-59f4-4a10-b258-a8547a8f6407"
+version = "0.7.0"
 
 [[deps.Future]]
 deps = ["Random"]
@@ -1049,12 +884,6 @@ uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
 
 [[deps.Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
-
-[[deps.Libiconv_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "42b62845d70a619f063a7da093d995ec8e15e778"
-uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.16.1+1"
 
 [[deps.LinearAlgebra]]
 deps = ["Libdl", "libblastrampoline_jll"]
@@ -1127,11 +956,16 @@ git-tree-sha1 = "00cfd92944ca9c760982747e9a1d0d5d86ab1e5a"
 uuid = "21216c6a-2e73-6563-6e65-726566657250"
 version = "1.2.2"
 
+[[deps.PrettyPrinting]]
+git-tree-sha1 = "a5db8a42938bc65c2679406c51a8f5fe9597c6e7"
+uuid = "54e16d92-306c-5ea0-a30b-337be88ac337"
+version = "0.3.2"
+
 [[deps.PrettyTables]]
 deps = ["Crayons", "Formatting", "Markdown", "Reexport", "Tables"]
-git-tree-sha1 = "0d1245a357cc61c8cd61934c07447aa569ff22e6"
+git-tree-sha1 = "69fd065725ee69950f3f58eceb6d144ce32d627d"
 uuid = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
-version = "1.1.0"
+version = "1.2.2"
 
 [[deps.Printf]]
 deps = ["Unicode"]
@@ -1174,10 +1008,10 @@ deps = ["LinearAlgebra", "Random"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[deps.SpecialFunctions]]
-deps = ["ChainRulesCore", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
-git-tree-sha1 = "ad42c30a6204c74d264692e633133dcea0e8b14e"
+deps = ["ChainRulesCore", "IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
+git-tree-sha1 = "793793f1df98e3d7d554b65a107e9c9a6399a6ed"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "1.6.2"
+version = "1.7.0"
 
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
@@ -1195,9 +1029,9 @@ version = "1.0.1"
 
 [[deps.Tables]]
 deps = ["DataAPI", "DataValueInterfaces", "IteratorInterfaceExtensions", "LinearAlgebra", "TableTraits", "Test"]
-git-tree-sha1 = "1162ce4a6c4b7e31e0e6b14486a6986951c73be9"
+git-tree-sha1 = "fed34d0e71b91734bf0a7e10eb1bb05296ddbcd0"
 uuid = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
-version = "1.5.2"
+version = "1.6.0"
 
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
@@ -1213,24 +1047,6 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [[deps.Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
-
-[[deps.XLSX]]
-deps = ["Dates", "EzXML", "Printf", "Tables", "ZipFile"]
-git-tree-sha1 = "96d05d01d6657583a22410e3ba416c75c72d6e1d"
-uuid = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
-version = "0.7.8"
-
-[[deps.XML2_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "Zlib_jll"]
-git-tree-sha1 = "1acf5bdf07aa0907e0a37d3718bb88d4b687b74a"
-uuid = "02c8fc9c-b97f-50b9-bbe4-9be30ff0a78a"
-version = "2.9.12+0"
-
-[[deps.ZipFile]]
-deps = ["Libdl", "Printf", "Zlib_jll"]
-git-tree-sha1 = "3593e69e469d2111389a9bd06bac1f3d730ac6de"
-uuid = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
-version = "0.9.4"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
@@ -1250,28 +1066,20 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 """
 
 # ╔═╡ Cell order:
-# ╠═bc8fa216-410d-4cc5-b273-22f07c9334ad
-# ╠═516f8e5e-8c4b-4208-896f-945d0138eadc
-# ╠═98085028-358d-48df-865d-b4efc1b0fb6a
-# ╠═23a0c733-c717-4380-b0ae-bf9e12baf539
-# ╠═af2597a2-b942-4d45-bb86-98ea9b7f051c
-# ╟─3a090d48-4b75-41ab-a22c-82b30bd6b38a
-# ╟─58be383e-fd15-46bf-b140-fd5b78eb37c1
-# ╠═0fc7d5f3-4721-4405-90c3-6474800b0c30
-# ╠═f3389620-94dd-4b58-ac3e-5a63ee92a1aa
-# ╠═66ad3f66-d24c-43c6-bc22-c3fa65bd4a0d
-# ╠═0155ee3d-148d-4c89-b011-7d634c88f4e3
-# ╠═ae593bec-f69a-40bf-82c8-5d5f72512604
-# ╠═0c10ab23-b2ee-4270-bfa4-92020eb9785b
-# ╠═5ec20342-9a4c-4b23-b5cd-3601d038443f
-# ╠═e5bed131-c107-4d33-8a83-685499f6edf5
-# ╟─e945d296-25e7-4858-a617-0fbe4295e7d0
-# ╠═3d2f840a-bf68-4a4b-8af4-c387abcf669e
-# ╟─acb11c02-7174-493a-a7c7-abfc2f230807
-# ╠═f25ba1a2-6a01-4d4b-abd5-f9d873f90a73
-# ╟─9b24ce06-c746-49e7-b0a6-67594111ffb7
-# ╟─0c2eb823-21d7-4fc7-9981-85d9a30de243
-# ╠═a686bcf3-0b59-4b38-8fa2-d84f2efb8172
-# ╠═99c7ee4d-486f-41e4-9928-49e793f5d38a
+# ╠═3d5e6bd6-27a8-11ec-3e7d-15c091c0a256
+# ╠═28acaf3f-3444-42b9-818d-88d383566773
+# ╠═1e9751a4-ebef-4d77-891b-f5f2662638ed
+# ╠═d1d70ab3-2f12-442a-bfef-a886ccfaaf34
+# ╠═ef2d01d1-82c0-4840-987a-ac4a43e46bdd
+# ╠═51eac085-878e-4cc4-a26b-befc09430d43
+# ╠═b3defa9c-148e-487e-ac56-d8110554033e
+# ╠═5bf69e60-f5f3-4106-b4a0-5d2845000e7f
+# ╠═fe229e2d-4030-43af-864b-c127c27ed973
+# ╠═3c0ba899-6da3-4593-aca3-8c855a9abfb1
+# ╠═cb281fcf-3a91-4fbf-b5f6-a561c928d05d
+# ╠═4c1aaf5b-2f56-4384-b376-6466f66cdbc9
+# ╠═8967af80-b20f-419f-9503-e334e4ae622c
+# ╠═9277778a-4b68-4c6f-9330-ec0886008f90
+# ╠═45f5fbe7-833c-41a2-b69c-8ae5f968d6b6
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
