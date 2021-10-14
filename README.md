@@ -50,5 +50,54 @@ Save to a common folder for other materials of the same year, such as the starti
 
 # Using Pacioli
 
-Wait for Tutorial!
+##Loading Pacioli
 
+Since Pacioli is not currently registered as a Julia package, it must be downloaded and extracted to a destination.
+
+add the relevant packages
+```
+using DecFP #allows data to exist as fixed point decimals
+
+using DataFrames #allows data to be shown in dataframes
+
+using XLSX # allows spreadsheets to be loaded
+```
+## Loading Accounts from XLSX
+stay tuned!
+
+## Balance Sheet
+
+```
+balncesheet(starting_balance)
+```
+This will produce the starting balance sheet.
+
+Replace ```starting_balance``` with another ledger, such as ```general_ledger``` will a balance sheet after all transactions in the ledger.  If there is a problem such as a sub ledger not being recorded property will result in an imbalance.  In this case the error needs to be fixed, and an issue report should be filled, to ensure such problems with the program are fixed. 
+
+## Set Up General Ledger
+```
+general_ledger=deepcopy(starting_balance)
+```
+This sets creates a copy of the starting balance, in a form that can then be edited.
+
+## Transaction
+
+a transaction is recoreded as follows
+```
+transaction(<memo>,# string to 
+<date> #date as string , this will be fixed to use date.jl at a later time
+ [debit_ledger_entries],# sub ledger keys sepperated by commas, keys are all strings
+ [debit_account_entries], # accounts are entered as strings 
+ [debit_ammount_entires], # the actual values that go in each account, entered as Float values, these will convert to Dec64 to 2 decimal places,
+                          [credit_ledger_entries],# sub ledger keys sepperated by commas, keys are all strings
+                          [credit_account_entries], # accounts are entered as strings 
+                          [credit_ammount_entires], # the actual values that go in each account, entered as Float values, these will convert to Dec64 to 2 decimal places,
+ ledger # the ledger to be modified, general_ledger by default   
+ )
+ 
+ ## Income Statement
+
+```
+income_statement(ledger) # enter the ledger that is last used, usually this would be general_ledger, after the year/months entries
+```
+This will produce an income statement listing each revenue, and expense, as well as the Net Income/Loss of the above transactions. 
