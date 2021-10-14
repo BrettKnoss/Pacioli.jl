@@ -13,9 +13,10 @@ using DecFP
 # ╔═╡ 98085028-358d-48df-865d-b4efc1b0fb6a
 using XLSX
 
-
-
-
+# ╔═╡ 23a0c733-c717-4380-b0ae-bf9e12baf539
+md"""
+Starting Balance consists of a dictionar, containing debit and credit dictionaries, containing accounts as empty dictionaries.
+"""
 
 # ╔═╡ af2597a2-b942-4d45-bb86-98ea9b7f051c
 starting_balance=starting_balance=Dict(
@@ -91,8 +92,110 @@ md"""
 Load enters each starting balance from an XLSX file, I can create multiple load functions, for different types of files, but I need to see if I end up using a SQL on NoSQL database later on.
 """
 
+# ╔═╡ 0fc7d5f3-4721-4405-90c3-6474800b0c30
+function loadCSV(startingDate,startingCSV)
+	row =1
+	
+		while row <= length(XLSX.readtable(startingXLSX, "Drawings")[1][1])
+	
+				starting_balance["debit"]["drawings"][(XLSX.readtable(startingXLSX, "Drawings")[1][1][row])]= DataFrame(
+		        			date=Vector{String}([startingDate]),
+							memo=Vector{String}(["Starting Balance"]),
+        					debit=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Drawings")[1][2][row])]),
+        					credit=Vector{Dec64}([Dec64(0.00)]),
+							balance=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Drawings")[1][2][row])]))
+			
+
+			row+=1
+		end
+
+	
+		expense=1
+	
+		while expense <= length(XLSX.readtable(startingXLSX, "Expenses")[1][1])
+	
+				starting_balance["debit"]["expenses"][(XLSX.readtable(startingXLSX, "Expenses")[1][1][expense])]= DataFrame(
+		        			date=Vector{String}([startingDate]),
+							memo=Vector{String}(["Starting Balance"]),
+        					debit=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Expenses")[1][2][expense])]),
+        					credit=Vector{Dec64}([Dec64(0.00)]),
+							balance=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Expenses")[1][2][expense])]))
+			
+
+			expense+=1
+		end
+	
+			asset=1
+	
+		while asset <= length(XLSX.readtable(startingXLSX, "Assets")[1][1])
+			
+
+				starting_balance["debit"]["assets"][(XLSX.readtable(startingXLSX, "Assets")[1][1][asset])]= DataFrame(
+		        			date=Vector{String}([startingDate]),
+							memo=Vector{String}(["Starting Balance"]),
+        					debit=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Assets")[1][2][asset])]),
+        					credit=Vector{Dec64}([Dec64(0.00)]),
+							balance=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Assets")[1][2][asset])]))
+
+
+			asset+=1
+		end
+	
+			liability=1
+	
+		while liability <= length(XLSX.readtable(startingXLSX, "Liabilities")[1][1])
+			
+
+				starting_balance["credit"]["liabilities"][(XLSX.readtable(startingXLSX, "Liabilities")[1][1][liability])]= DataFrame(
+		        			date=Vector{String}([startingDate]),
+							memo=Vector{String}(["Starting Balance"]),
+        					debit=Vector{Dec64}([Dec64(0.00)]),
+							credit=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Liabilities")[1][2][liability])]),
+        			
+							balance=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Liabilities")[1][2][liability])]))
+
+
+			liability+=1
+		end
+	
+			equity=1
+	
+		while equity <= length(XLSX.readtable(startingXLSX, "Equity")[1][1])
+			
+
+				starting_balance["credit"]["equity"][(XLSX.readtable(startingXLSX, "Equity")[1][1][equity])]= DataFrame(
+		        			date=Vector{String}([startingDate]),
+							memo=Vector{String}(["Starting Balance"]),
+        					debit=Vector{Dec64}([Dec64(0.00)]),
+							credit=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Equity")[1][2][equity])]),
+        			
+							balance=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Equity")[1][2][equity])]))
+
+
+			equity+=1
+		end
+	
+			revenue=1
+	
+		while revenue <= length(XLSX.readtable(startingXLSX, "Revenues")[1][1])
+			
+
+				starting_balance["credit"]["revenue"][(XLSX.readtable(startingXLSX, "Revenues")[1][1][revenue])]= DataFrame(
+		        			date=Vector{String}([startingDate]),
+							memo=Vector{String}(["Starting Balance"]),
+        					debit=Vector{Dec64}([Dec64(0.00)]),
+							credit=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Revenues")[1][2][revenue])]),
+        			
+							balance=Vector{Dec64}([Dec64(XLSX.readtable(startingXLSX, "Revenues")[1][2][revenue])]))
+
+
+			revenue+=1
+		end
+	
+end
+
 # ╔═╡ f3389620-94dd-4b58-ac3e-5a63ee92a1aa
-function load(startingDate,startingXLSX)
+function loadXLSX(startingDate,startingXLSX)
 	row =1
 	
 		while row <= length(XLSX.readtable(startingXLSX, "Drawings")[1][1])
@@ -405,202 +508,124 @@ function calc_credit_balance!(
 		
 end;	
 
-# ╔═╡ 80b0beb5-b364-4d5f-84a4-76219ffe2565
-function transaction(
-    memo,
-	date,
-	debit_ledger_entries=[],
-	debit_account_entries=[],
-    debit_amount_entries=[],
-	credit_ledger_entries=[],
-    credit_account_entries=[],
-    credit_amount_entries=[],
-	general_ledger=general_ledger
-	)
-	
-	
+# ╔═╡ 0c10ab23-b2ee-4270-bfa4-92020eb9785b
+function get_ledger_entry(general_ledger, ledger_entry)
+	if haskey(general_ledger["debit"], ledger_entry)
+		return general_ledger["debit"][ledger_entry]
+	elseif haskey(general_ledger["credit"], ledger_entry)
+		return general_ledger["credit"][ledger_entry]
+	else
+		return nothing
+	end
+end
+
+# ╔═╡ 5ec20342-9a4c-4b23-b5cd-3601d038443f
+function get_account_entry(ledger_entry, account_entry)
+	if haskey(ledger_entry, account_entry)
+		return ledger_entry[account_entry]
+	else
+		return nothing
+	end
+end
+
+# ╔═╡ e5bed131-c107-4d33-8a83-685499f6edf5
+function transaction(memo, date,
+	debit_ledger_entries=[], debit_account_entries=[],
+	debit_amount_entries=[], credit_ledger_entries=[],
+	credit_account_entries=[], credit_amount_entries=[],
+	general_ledger=general_ledger)
+
 	if length(credit_ledger_entries) != length(credit_account_entries)
-		
 		return "Error--there must be the same number of credit legders and accounts"
-		
-	else
-		
-		if length(credit_account_entries) != length(credit_amount_entries)
-			
-			return "Error-- each account needs a value and vice versa"
-			
-		else
-			
-				if length(debit_ledger_entries) != length(debit_account_entries)
-		
-						return "Error--there must be the same number of debit legders and accounts"
-		
-	else
-		
-				if length(debit_account_entries) != length(debit_amount_entries)
-			
-					return "Error-- each debit account needs a value and vice versa"
-			
-				else
-					
-					#test that debit amounts are balanced with credit amounts
-					#totals are converted to Dec64 rounded to two decimals, to ensure that computer arithmetic, does not create a false imbalance
-					
-					#IMPORTANT when testing, revise code if imbalances are a problem
-					
-					if (round(Dec64(sum(debit_amount_entries)),digits=2)
-					  -round(Dec64(sum(credit_amount_entries)),digits=2))!=0
-						
-						#there might be a problem, that the amounts no longer balance  I can move this test after the while loop, to ensure that is not a problem, but it may hurt performance, and it would mean adding invalid values to accounts
-		
-						return "Error-total credits does not match total debits"
-					else
-						
-					journal_entry=DataFrame(Date=[date], 
-											DebitedAccounts=[""],
-											CreditedAccounts=[""],
-											Debits=Vector{Dec64}([0.00]),
-											Credits=Vector{Dec64}([0.00]),
-											Balance=Vector{Dec64}([0.00]))
-					i=1
-	
+	end
+	if length(credit_account_entries) != length(credit_amount_entries)
+		return "Error-- each account needs a value and vice versa"
+	end
+	if length(debit_ledger_entries) != length(debit_account_entries)
+	    return "Error--there must be the same number of debit legders and accounts"
+	end
+	if length(debit_account_entries) != length(debit_amount_entries)
+		return "Error-- each debit account needs a value and vice versa"
+	end
+	if (round(Dec64(sum(debit_amount_entries)),digits=2)
+	  -round(Dec64(sum(credit_amount_entries)),digits=2))!=0
+		return "Error-total credits does not match total debits"
+	end
+
+	journal_entry=DataFrame(Date=[date],
+							DebitedAccounts=[""],
+							CreditedAccounts=[""],
+							Debits=Vector{Dec64}([0.00]),
+							Credits=Vector{Dec64}([0.00]),
+							Balance=Vector{Dec64}([0.00]))
+
+	i=1
 	while i <= length(debit_amount_entries)
-		
-		# tests of individual entries are done in a while loop, after testing that the number and types of entries are correct.
-		
-		# after testing that the entries are all the same length, and the amounts balances are equal, I can then test that the leger and account names are entered correctly
-		#These tests are done after the length tests, but before the entry, to avoid adding values 
-		
-			if !haskey(general_ledger["debit"], credit_ledger_entries[i]) 
-
-				return "Error -- "*credit_ledger_entries[i]*" not found"
-				
-				if !haskey(general_ledger["credit"], credit_ledger_entries[i])
-					
-					return "Error -- "*credit_ledger_entries[i]*" not found"
-				else
-
-									
-				end
-				
-			elseif !haskey(general_ledger["debit"], debit_ledger_entries[i])
-			
-				return "Error -- "*debit_ledger_entries[i]*" not found"
-			
-					if !haskey(general_ledger["credit"], debit_ledger_entries[i])
-					
-						return "Error -- "*debit_ledger_entries[i]*" not found"
-					
-					else
-						# once I know the ledger is valid, I test if the account is valid
-						# for some reason, this isn't working
-									
-                        if !haskey(general_ledger["debit"][credit_ledger_entries[i]],  credit_account_entries[i])
-						
-							return "Error --"*credit_account_entries[i]*" not found in" *credit_ledger_entries[i]*"."
-						
-						elseif !haskey(general_ledger["credit"][credit_ledger_entries[i]],  credit_account_entries[i])
-						
-							return "Error --"*credit_account_entries[i]*" not found in" *credit_ledger_entries[i]*"."
-						
-						elseif!haskey(general_ledger["debit"][debit_ledger_entries[i]],  debit_account_entries[i])
-						
-							return "Error --"*debit_account_entries[i]*" not found in" *debit_ledger_entries[i]*"."
-						
-						elseif !haskey(general_ledger["credit"][debit_ledger_entries[i]],  debit_account_entries[i])
-										
-						return "Error --"*credit_account_entries[i]*" not found in" *credit_ledger_entries[i]*"."
-					end
-								
-								
-			else #if each value passes it's tests. it goes on. 
-				
-					
-				#I need a test to find if the account exists in the dictionary, since I'm using indexes, this should be used here, again checking debit then credit
-								
-				  #It might make my code conveluted to have two sub dictionaries for credit and debit.  I could also nest the check for accounts above
-							
-				#now that it's tested that leders and accounts exist in the general_ledger dictionary convert the account amounts to Dec64 values rounded to two digits.				
-			
-			debit_amount_entries[i]=Dec64(round(debit_amount_entries[i]; digits=2))
-	
-	
-		
-			credit_amount_entries[i]=Dec64(round(credit_amount_entries[i]; digits=2))
-				
-			i+=1
+		ledger_entry = get_ledger_entry(general_ledger, debit_ledger_entries[i])
+		if ledger_entry == nothing
+        	return "Error -- "*debit_ledger_entries[i]*" not found"
 		end
-	end
-			
-		# adding values to the journal_entry, and accounts, is done after testing, so errors in the names of accounts and ledgers, are found sooner
-						
-					i=1
-					
-					while i <= length(debit_ledger_entries)
-						
-						#values in arrays are identified with variables, then passed to other functions, to add information to accounts and the journal_entry
-						
-						#debit values are converted
-							
-						debit_ledger_name=debit_ledger_entries[i]
-    					debit_amount = round(debit_amount_entries[i];digits=2)
-    					debit_account=debit_account_entries[i]
-							
-						calc_debit_balance!(
-									general_ledger,
-									journal_entry,
-    								date,
-									debit_ledger_name,
-    								debit_account,
-    								debit_amount,
-									memo)
-	
-						i+=1											
-					end
-						
-					i=1
-						
-					while i <= length(credit_ledger_entries)
-						
-						#credit values are converted and added, after debit values
-							
-						credit_ledger_name=credit_ledger_entries[i]
-						credit_account=credit_account_entries[i]
-    					credit_amount=floor(credit_amount_entries[i];digits=2)
-						
-								
-						calc_credit_balance!(
-									general_ledger,
-									journal_entry,
-    								date,
-									credit_ledger_name,
-    								credit_account,
-    								credit_amount,
-									memo)
-					
-						i+=1
-							
-					end
-					
-					#after these values are added to the journal entry in individual while loops, these the total debits and credits are added to and  this is added to the journal entry.
-					
-						
-					push!(journal_entry,["","Total","Transaction",
-								round(sum(journal_entry.Debits); digits=2),
-								round(sum(journal_entry.Credits); digits=2),0])
-					
-						#finally the journl entry and table are outputed
-						
-					return (journal_entry, memo)
-					
+		account_entry = get_account_entry(ledger_entry, credit_account_entries[i])
+		if account_entry == nothing
+        	return "Error -- "*debit_account_entries[i]*" not found in"*debit_ledger_entries[i]*"."
+        end
 
+        debit_amount_entries[i]=round(Dec64(debit_amount_entries[i]),digits=2)
+    	i+=1
+    end
 
-					end
-				end
-			end
+	i=1
+	while i <= length(credit_amount_entries)
+		ledger_entry = get_ledger_entry(general_ledger, credit_ledger_entries[i])
+		if ledger_entry == nothing
+			return "Error -- "*credit_ledger_entries[i]*" not found"
 		end
-	end
-end;	
+		account_entry = get_account_entry(ledger_entry, credit_account_entries[i])
+		if account_entry == nothing
+			return "Error -- "*credit_account_entries[i]*" not found in "*credit_ledger_entries[i]*"."
+        end
+
+        credit_amount_entries[i]=round(Dec64(credit_amount_entries[i]),digits=2)
+    	i+=1
+    end
+
+	i=1
+  	while i <= length(debit_ledger_entries)
+        debit_ledger_name=debit_ledger_entries[i]
+        debit_amount = round(debit_amount_entries[i];digits=2)
+        debit_account=debit_account_entries[i]
+        calc_debit_balance!(
+                    general_ledger,
+                    journal_entry,
+                    date,
+                    debit_ledger_name,
+                    debit_account,
+                    debit_amount,
+                    memo)
+        i+=1
+    end
+
+    i=1
+	while i <= length(credit_ledger_entries)
+        credit_ledger_name=credit_ledger_entries[i]
+        credit_account=credit_account_entries[i]
+        credit_amount=floor(credit_amount_entries[i];digits=2)
+        calc_credit_balance!(
+                    general_ledger,
+                    journal_entry,
+                    date,
+                    credit_ledger_name,
+                    credit_account,
+                    credit_amount,
+                    memo)
+        i+=1
+    end
+
+    push!(journal_entry,["","Total","Transaction",
+                round(sum(journal_entry.Debits); digits=2),
+                round(sum(journal_entry.Credits); digits=2),0])
+    return (journal_entry, memo)
+end;
 
 # ╔═╡ e945d296-25e7-4858-a617-0fbe4295e7d0
 md"""
@@ -845,8 +870,19 @@ Other things to do
 	See about using PostgressQL instead of a library
 """
 
-# ╔═╡ 99c7ee4d-486f-41e4-9928-49e793f5d38a
+# ╔═╡ a686bcf3-0b59-4b38-8fa2-d84f2efb8172
+general_ledger=deepcopy(starting_balance)
 
+# ╔═╡ 99c7ee4d-486f-41e4-9928-49e793f5d38a
+transaction("Weird Example",
+	"Jan 2 2021",
+	["retained"],
+	["Gross Income"],
+	[100.00],
+				["asset"],
+				["Land"],
+				[100.00],
+starting_balance)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1218,21 +1254,24 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═516f8e5e-8c4b-4208-896f-945d0138eadc
 # ╠═98085028-358d-48df-865d-b4efc1b0fb6a
 # ╠═23a0c733-c717-4380-b0ae-bf9e12baf539
-# ╠═097d2a2e-deeb-4b1d-b5bf-851ad05ea18f
 # ╠═af2597a2-b942-4d45-bb86-98ea9b7f051c
 # ╟─3a090d48-4b75-41ab-a22c-82b30bd6b38a
 # ╟─58be383e-fd15-46bf-b140-fd5b78eb37c1
+# ╠═0fc7d5f3-4721-4405-90c3-6474800b0c30
 # ╠═f3389620-94dd-4b58-ac3e-5a63ee92a1aa
 # ╠═66ad3f66-d24c-43c6-bc22-c3fa65bd4a0d
 # ╠═0155ee3d-148d-4c89-b011-7d634c88f4e3
 # ╠═ae593bec-f69a-40bf-82c8-5d5f72512604
-# ╠═80b0beb5-b364-4d5f-84a4-76219ffe2565
+# ╠═0c10ab23-b2ee-4270-bfa4-92020eb9785b
+# ╠═5ec20342-9a4c-4b23-b5cd-3601d038443f
+# ╠═e5bed131-c107-4d33-8a83-685499f6edf5
 # ╟─e945d296-25e7-4858-a617-0fbe4295e7d0
 # ╠═3d2f840a-bf68-4a4b-8af4-c387abcf669e
 # ╟─acb11c02-7174-493a-a7c7-abfc2f230807
 # ╠═f25ba1a2-6a01-4d4b-abd5-f9d873f90a73
 # ╟─9b24ce06-c746-49e7-b0a6-67594111ffb7
 # ╟─0c2eb823-21d7-4fc7-9981-85d9a30de243
+# ╠═a686bcf3-0b59-4b38-8fa2-d84f2efb8172
 # ╠═99c7ee4d-486f-41e4-9928-49e793f5d38a
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
