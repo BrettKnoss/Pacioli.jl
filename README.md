@@ -85,7 +85,7 @@ This sets creates a copy of the starting balance, in a form that can then be edi
 a transaction is recoreded as follows
 ```
 transaction(<memo>,# string to 
-<date> #date as string , this will be fixed to use date.jl at a later time
+<date> # date is entered using the format day <3 letter abbreviation for month> <Year> seperated by spaces
  [debit_ledger_entries],# sub ledger keys sepperated by commas, keys are all strings
  [debit_account_entries], # accounts are entered as strings 
  [debit_ammount_entires], # the actual values that go in each account, entered as Float values, these will convert to Dec64 to 2 decimal places,
@@ -94,6 +94,18 @@ transaction(<memo>,# string to
                           [credit_ammount_entires], # the actual values that go in each account, entered as Float values, these will convert to Dec64 to 2 decimal places,
  ledger # the ledger to be modified, general_ledger by default   
  )
+ 
+ ###Transaction breakdown
+ 
+ ####Date
+ ex."1 Jan 2021"
+ 
+ Day - is a 1 or 2 digit number
+ 
+ Month- is the first three letters of each month name, with the first letter capitalized
+ 
+ Year - is the 4 digit year (Y2K)
+ 
  
  ## Income Statement
 
