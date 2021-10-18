@@ -10,6 +10,9 @@ using FunSQL
 # ╔═╡ 28acaf3f-3444-42b9-818d-88d383566773
 using DataFrames, DecFP
 
+# ╔═╡ 331e3481-981e-4dc0-b9c9-033770034e46
+using Dates
+
 # ╔═╡ 1e9751a4-ebef-4d77-891b-f5f2662638ed
 starting_balance=starting_balance=Dict(
 	"debit"=>Dict(
@@ -159,11 +162,28 @@ end
 #Transaction, each of these functions computes a transaction
 
 #transaction
-#get_ledger_entry
-#get_account_entry
-#calc_debit_balance!
-#calc_credit_balance!
-#add2ledger!
+
+#abbrev_date! changes date to the corroct format
+
+#get_ledger_entry -- tests that ledger is in dictioary
+#get_account_entry -- tests that account is in ledger
+
+
+#calc_debit_balance!-- computes balance of debited accounts
+#calc_credit_balance!-- computes balance of credited accounts
+
+#add2ledger! -- adds trancations to the appropreate ledgers
+
+# ╔═╡ f25d873c-baed-4780-8194-34a7a0ab9781
+function abbrev_date!(date)
+ d = Date(date,DateFormat("d u Y"))
+ Dates.format(d, "d u Y")
+
+
+end
+
+# ╔═╡ 972dfdd1-b17e-45fd-80ee-a57fa16ac98c
+abbrev_date!("11 Oct 2021")
 
 # ╔═╡ 51eac085-878e-4cc4-a26b-befc09430d43
 function get_ledger_entry(general_ledger, ledger_entry)
@@ -404,6 +424,9 @@ function transaction(memo, date,
 	credit_account_entries=[], credit_amount_entries=[],
 	general_ledger=general_ledger)
 
+	date=abbrev_date!(date)
+	
+	
 	if length(credit_ledger_entries) != length(credit_account_entries)
 		return "Error--there must be the same number of credit legders and accounts"
 	end
@@ -710,19 +733,11 @@ function balancesheet(ledger)
 	return balance_sheet
 end;
 
-# ╔═╡ 45f5fbe7-833c-41a2-b69c-8ae5f968d6b6
-transaction("Weird Example", "Jan 2 2021",
-	["retained"], 
-	["Gross Inome"], 
-	[100.00], 
-					["retained"],
-					["Net Income"], 
-					[100.00], starting_balance)
-
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DecFP = "55939f99-70c6-5e9b-8bb0-5071ed7d61fd"
 FunSQL = "cf6cc811-59f4-4a10-b258-a8547a8f6407"
 
@@ -1068,9 +1083,12 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╔═╡ Cell order:
 # ╠═3d5e6bd6-27a8-11ec-3e7d-15c091c0a256
 # ╠═28acaf3f-3444-42b9-818d-88d383566773
+# ╠═331e3481-981e-4dc0-b9c9-033770034e46
 # ╠═1e9751a4-ebef-4d77-891b-f5f2662638ed
 # ╠═d1d70ab3-2f12-442a-bfef-a886ccfaaf34
 # ╠═ef2d01d1-82c0-4840-987a-ac4a43e46bdd
+# ╠═f25d873c-baed-4780-8194-34a7a0ab9781
+# ╠═972dfdd1-b17e-45fd-80ee-a57fa16ac98c
 # ╠═51eac085-878e-4cc4-a26b-befc09430d43
 # ╠═b3defa9c-148e-487e-ac56-d8110554033e
 # ╠═5bf69e60-f5f3-4106-b4a0-5d2845000e7f
@@ -1080,6 +1098,5 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═4c1aaf5b-2f56-4384-b376-6466f66cdbc9
 # ╠═8967af80-b20f-419f-9503-e334e4ae622c
 # ╠═9277778a-4b68-4c6f-9330-ec0886008f90
-# ╠═45f5fbe7-833c-41a2-b69c-8ae5f968d6b6
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
