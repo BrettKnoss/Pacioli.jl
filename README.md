@@ -68,7 +68,7 @@ stay tuned!
 ## Balance Sheet
 
 ```
-balncesheet(starting_balance)
+balancesheet(starting_balance)
 ```
 This will produce the starting balance sheet.
 
